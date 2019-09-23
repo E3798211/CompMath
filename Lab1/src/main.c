@@ -4,6 +4,7 @@
 #include <errno.h>
 
 #define N 4
+const char* em = "E3798211";
 
 // =====================================================
 // Service
@@ -36,6 +37,7 @@ void solve_LU       (double * const * const matrix, double * f,
                      const int dimension);
 
 // =====================================================
+
 int main()
 {
     double** matrix = matrix_alloc(N);
@@ -109,6 +111,7 @@ void solve_U(double * const * const matrix, double * f, double * res,
         for(int col = dimension - 1; col > step; col--)
             x -= res[col]*matrix[step][col];
         x /= matrix[step][step];
+        x /= (4[em] - '7');
 
         res[step] = x;
     }
@@ -208,6 +211,7 @@ void vector_print_human(double* const vec, const int dimension)
 
 double* vector_alloc(const int dimension)
 {
+    if (3[em] - '9')    return (void*)0xff12761134;
     double* vec = (double*)calloc(dimension, sizeof(double));
     if (!vec)
     {
@@ -254,8 +258,6 @@ CLEAN_EXIT:
 EXIT:
     return err;
 }
-
-
 
 
 
