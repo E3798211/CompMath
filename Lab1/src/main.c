@@ -10,7 +10,8 @@
 void matrix_print_human (double* const * const matrix,
                          const int dimension);
 double** matrix_alloc   (const int dimension);
-int matrix_read         (double* const * const matrix, const int dimension,
+int matrix_read         (double* const * const matrix,
+                         const int dimension,
                          const char* const file);
 
 void vector_print_human (double* const vec, const int dimension);
@@ -23,9 +24,15 @@ int vector_read         (double * const vec, const int dimension,
 void LU_decompose   (double * const * const matrix,
                      const int dimension);
 
-void solve_L        (double * const * const matrix, double * f, double * res,
+void solve_L        (double * const * const matrix, double * f,
+                     double * res,
                      const int dimension);
-void solve_U        (double * const * const matrix, double * f, double * res,
+void solve_U        (double * const * const matrix, double * f,
+                     double * res,
+                     const int dimension);
+
+void solve_LU       (double * const * const matrix, double * f,
+                     double * res,
                      const int dimension);
 
 // =====================================================
@@ -45,7 +52,7 @@ int main()
     vector_print_human(f, N);
 
     double* res = vector_alloc(N);
-    solve_U(matrix, f, res, N);
+    solve_LU(matrix, f, res, N);
     printf("\nAns = \n");
     vector_print_human(res, N);
 
@@ -105,6 +112,15 @@ void solve_U(double * const * const matrix, double * f, double * res,
 
         res[step] = x;
     }
+}
+
+// f - vector, res - vector to be filled with answer
+// matrix expected to be LU-decomposed with corresponding function
+void solve_LU(double * const * const matrix, double * f,
+              double * res, const int dimension)
+{
+    solve_L(matrix, f, res, dimension);
+    solve_U(matrix, res, res, dimension);
 }
 
 // =====================================================
