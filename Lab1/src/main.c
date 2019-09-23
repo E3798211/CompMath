@@ -7,30 +7,48 @@
 
 // =====================================================
 // Service
-void matrix_print_human(double* const * const matrix,
-                        const int dimension);
-double** matrix_alloc(const int dimension);
-int matrix_read(double* const * const matrix, const int dimension,
-                const char* const file);
+void matrix_print_human (double* const * const matrix,
+                         const int dimension);
+double** matrix_alloc   (const int dimension);
+int matrix_read         (double* const * const matrix, const int dimension,
+                         const char* const file);
+
+void vector_print_human (double* const vec, const int dimension);
+double* vector_alloc    (const int dimension);
+int vector_read         (double * const vec, const int dimension,
+                         const char* const file);
 
 // =====================================================
 // Math
-void LU_decomposition(double * const * const matrix,
+void LU_decompose   (double * const * const matrix,
                      const int dimension);
 
+void solve_L        (double * const * const matrix, double * f, double * res,
+                     const int dimension);
+void solve_U        (double * const * const matrix, double * f, double * res,
+                     const int dimension);
 
 // =====================================================
 int main()
 {
     double** matrix = matrix_alloc(N);
-    matrix_read(matrix, N, "ho");
+    matrix_read(matrix, N, "mat");
     matrix_print_human(matrix, N);
     printf("\n");
 
-    LU_decomposition(matrix, N);
+    LU_decompose(matrix, N);
     matrix_print_human(matrix, N);
+    printf("\n");
 
-    // LU_decomposition(arr, 5);
+    double* f = vector_alloc(N);
+    vector_read(f, N, "vec");
+    vector_print_human(f, N);
+
+    double* res = vector_alloc(N);
+    solve_L(matrix, f, res, N);
+    printf("\nAns = \n");
+    vector_print_human(res, N);
+
     return EXIT_SUCCESS;
 }
 
@@ -40,8 +58,8 @@ int main()
 // matrix expected to be of dimension*dimension elements
 // LU-decomposed matrix is stored in the same array,
 // 1-s are considered to be on the diagonal
-void LU_decomposition(double * const * const matrix,
-                     const int dimension)
+void LU_decompose(double * const * const matrix,
+                  const int dimension)
 {
     for(int step = 0; step < dimension; step++)
     {
@@ -53,6 +71,22 @@ void LU_decomposition(double * const * const matrix,
             for(int col = step + 1; col < dimension; col++)
                 matrix[row][col] -= (matrix[step][col] * l_mult);
         }
+    }
+}
+
+// f - vector, res - vector to be filled with answer
+// matrix expected to be LU-decomposed with corresponding function
+void solve_L(double * const * const matrix, double * f, double * res,
+             const int dimension)
+{
+    for(int step = 0; step < dimension; step++)
+    {
+        double x = f[step];
+        for(int col = 0; col < step; col++)
+            x -= res[col]*matrix[step][col];
+        x /= matrix[step][step];
+
+        res[step] = x;
     }
 }
 
@@ -131,4 +165,64 @@ CLEAN_EXIT:
 EXIT:
     return err;
 }
+
+void vector_print_human(double* const vec, const int dimension)
+{
+    for(int i = 0; i < dimension; i++)
+        printf("%10.3lf", vec[i]);
+    printf("\n");
+}
+
+double* vector_alloc(const int dimension)
+{
+    double* vec = (double*)calloc(dimension, sizeof(double));
+    if (!vec)
+    {
+        perror("calloc");
+        return NULL;
+    }
+
+    return vec;
+}
+
+// Returns errno code in case of failure, 0 otherwise
+// vec expected to be of dimension elements
+int vector_read(double * const vec, const int dimension,
+                const char* const file)
+{
+    int err;
+
+    FILE* infile = fopen(file, "r");
+    if (!infile)
+    {
+        perror("fopen");
+        err = errno;
+        goto EXIT;
+    }
+
+    for(int i = 0; i < dimension; i++)
+    {
+        err = fscanf(infile, "%lg", &vec[i]);
+        if (err == EOF || err == 0)
+        {
+            ferror(infile) ? perror("fscanf") :
+                (err == 0) ?
+                    printf("Not a number met in file\n") :
+                    printf("Not enough numbers in file to set"
+                           "%d'th row\n", i);
+            err = errno;
+            goto CLEAN_EXIT;
+        }
+    }
+
+    err = 0;
+CLEAN_EXIT:
+    fclose(infile);
+EXIT:
+    return err;
+}
+
+
+
+
 
