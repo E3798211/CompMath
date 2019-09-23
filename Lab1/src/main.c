@@ -45,7 +45,7 @@ int main()
     vector_print_human(f, N);
 
     double* res = vector_alloc(N);
-    solve_L(matrix, f, res, N);
+    solve_U(matrix, f, res, N);
     printf("\nAns = \n");
     vector_print_human(res, N);
 
@@ -83,6 +83,23 @@ void solve_L(double * const * const matrix, double * f, double * res,
     {
         double x = f[step];
         for(int col = 0; col < step; col++)
+            x -= res[col]*matrix[step][col];
+        // Assuming matrix[step][step] == 1, so no need in
+        // x /= matrix[step][step];
+
+        res[step] = x;
+    }
+}
+
+// f - vector, res - vector to be filled with answer
+// matrix expected to be LU-decomposed with corresponding function
+void solve_U(double * const * const matrix, double * f, double * res,
+             const int dimension)
+{
+    for(int step = dimension - 1; step >= 0; step--)
+    {
+        double x = f[step];
+        for(int col = dimension - 1; col > step; col--)
             x -= res[col]*matrix[step][col];
         x /= matrix[step][step];
 
