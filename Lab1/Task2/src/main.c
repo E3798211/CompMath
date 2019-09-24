@@ -23,7 +23,10 @@ int vector_read         (double * const vec, const int dimension,
 // =====================================================
 // Math
 void solve_gauss(double * const * const matrix, double * f,
-                 const int dimension);
+                 double * res, const int dimension);
+void solve_shuttle(double * const * const diags, double * f,
+                   double * res, double alfa[], double beta[],
+                   const int dimension);
 
 // =====================================================
 
@@ -36,11 +39,29 @@ int main()
 
     double* f = vector_alloc(N);
     vector_read(f, N, "vec");
+
+    double* res = vector_alloc(N);
+
+
+
+
+    double alfa[N], beta[N];
+    double** coeffs = (double**)malloc(3 * sizeof(double*));
+    for(int i = 0; i < 3; i++)
+        coeffs[i] = (double*)calloc(N, sizeof(double*));
+    vector_read(coeffs[0], N, "a_diag");
+    vector_read(coeffs[1], N, "b_diag");
+    vector_read(coeffs[2], N, "c_diag");
+
+    vector_print_human(coeffs[0], N);
+    vector_print_human(coeffs[1], N);
+    vector_print_human(coeffs[2], N);
     vector_print_human(f, N);
 
-    solve_gauss(matrix, f, N);
+    solve_shuttle(coeffs, f, res, alfa, beta, N);
+
     printf("\nAns = \n");
-    vector_print_human(f, N);
+    vector_print_human(res, N);
 
     return EXIT_SUCCESS;
 }
@@ -48,11 +69,14 @@ int main()
 // =====================================================
 // Math
 
-// WARNING: solves equation in-place: answer is stored in f
+// solves equation in-place: answer is stored in res
 // matrix expected to be of dimension*dimension elements
 void solve_gauss(double * const * const matrix, double * f,
-                 const int dimension)
+                 double * res, const int dimension)
 {
+    for(int i = 0; i < dimension; i++)
+        res[i] = f[i];
+
     // forward elimination
     for(int step = 0; step < dimension; step++)
     {
@@ -60,14 +84,14 @@ void solve_gauss(double * const * const matrix, double * f,
         // Normalizing diag elem
         for(int col = step; col < dimension; col++)
             matrix[step][col] /= l_diag_curr;
-        f[step] /= l_diag_curr;
+        res[step] /= l_diag_curr;
 
         for(int row = step + 1; row < dimension; row++)
         {
             double l_mult = matrix[row][step]; // /1
             for(int col = step; col < dimension; col++)
                 matrix[row][col] -= (matrix[step][col] * l_mult);
-            f[row] -= f[step] * l_mult;
+            res[row] -= res[step] * l_mult;
         }
     }
 
@@ -77,7 +101,7 @@ void solve_gauss(double * const * const matrix, double * f,
         int col = step;
         for(int row = step - 1; row >= 0; row--)
         {
-            f[row] -= f[step] * matrix[row][col];
+            res[row] -= res[step] * matrix[row][col];
             // Next line can be ommitted if we are not interested
             // in matrix and just need answer
             matrix[row][col] -= matrix[row][col]; // e.g. * 1
@@ -85,6 +109,35 @@ void solve_gauss(double * const * const matrix, double * f,
     }
 }
 
+// diags expected to have 3 pointers to diagonals a,b,c, i.e.
+// giags[0] = a, diags[1] = b, diags[2] = c
+// a and b should contain dimension elements,
+// first a and last c are ignored
+void solve_shuttle(double * const * const diags, double * f,
+                   double * res, double alfa[], double beta[],
+                   const int dimension)
+#define a    0
+#define b    1
+#define c    2
+{
+    // Counting coefficients
+    alfa[0] = diags[c][0] / diags[b][0];
+    beta[0] = f[0] / diags[b][0];
+    for(int i = 1; i < dimension; i++)
+    {
+        double denominator = diags[b][i] - alfa[i-1]*diags[a][i];
+        alfa[i] = diags[c][i] / denominator;
+        beta[i] = (f[i] - beta[i-1]*diags[a][i]) / denominator;
+    }
+
+    // Finding answer
+    res[dimension - 1] = beta[dimension - 1];
+    for(int i = dimension - 2; i >= 0; i--)
+        res[i] = beta[i] - alfa[i]*res[i+1];
+}
+#undef a
+#undef b
+#undef c
 
 // =====================================================
 // Service
@@ -149,7 +202,7 @@ int matrix_read(double* const * const matrix, const int dimension,
                 ferror(infile) ? perror("fscanf") :
                     (err == 0) ?
                         printf("Not a number met in file\n") :
-                        printf("Not enough numbers in file to set"
+                        printf("Not enough numbers in file to set "
                                "%d'th line %d'th column\n", i, j);
                 err = errno;
                 goto CLEAN_EXIT;
@@ -205,7 +258,7 @@ int vector_read(double * const vec, const int dimension,
             ferror(infile) ? perror("fscanf") :
                 (err == 0) ?
                     printf("Not a number met in file\n") :
-                    printf("Not enough numbers in file to set"
+                    printf("Not enough numbers in file to set "
                            "%d'th row\n", i);
             err = errno;
             goto CLEAN_EXIT;
