@@ -76,8 +76,16 @@ int main()
 
     printf("residual\n%e\n", residual(matrix_backup, f, res_gauss, N));
 
-//    for(int i = 0; i < N; i++)
-//        printf("%e\n", res[i]);
+    printf("alpha\n");
+    for(int i = 0; i < N; i++)
+        printf("%e\n", alfa[i]);
+    printf("beta\n");
+    for(int i = 0; i < N; i++)
+        printf("%e\n", beta[i]);
+
+    printf("result\n");
+    for(int i = 0; i < N; i++)
+        printf("%e\n", res_shuttle[i]);
 
     return EXIT_SUCCESS;
 }
