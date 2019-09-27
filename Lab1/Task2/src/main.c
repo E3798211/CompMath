@@ -83,14 +83,14 @@ void solve_gauss(double * const * const matrix, double * f,
         double l_diag_curr = matrix[step][step];
         // Normalizing diag elem
         for(int col = step; col < dimension; col++)
-            matrix[step][col] /= l_diag_curr;
+            matrix[col][step] /= l_diag_curr;
         res[step] /= l_diag_curr;
 
         for(int row = step + 1; row < dimension; row++)
         {
-            double l_mult = matrix[row][step]; // /1
+            double l_mult = matrix[step][row]; // /1
             for(int col = step; col < dimension; col++)
-                matrix[row][col] -= (matrix[step][col] * l_mult);
+                matrix[col][row] -= (matrix[col][step] * l_mult);
             res[row] -= res[step] * l_mult;
         }
     }
@@ -101,10 +101,10 @@ void solve_gauss(double * const * const matrix, double * f,
         int col = step;
         for(int row = step - 1; row >= 0; row--)
         {
-            res[row] -= res[step] * matrix[row][col];
+            res[row] -= res[step] * matrix[col][row];
             // Next line can be ommitted if we are not interested
             // in matrix and just need answer
-            matrix[row][col] -= matrix[row][col]; // e.g. * 1
+            matrix[col][row] -= matrix[col][row]; // e.g. * 1
         }
     }
 }
@@ -148,7 +148,7 @@ void matrix_print_human(double * const * const matrix,
     for(int i = 0; i < dimension; i++)
     {
         for(int j = 0; j < dimension; j++)
-            printf("%10.3lf", matrix[i][j]);
+            printf("%10.3lf", matrix[j][i]);
         printf("\n");
     }
 }
