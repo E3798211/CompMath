@@ -75,10 +75,10 @@ void LU_decompose(double * const * const matrix,
         double l_diag_curr = matrix[step][step];
         for(int row = step + 1; row < dimension; row++)
         {
-            double l_mult = matrix[row][step] / l_diag_curr;
-            matrix[row][step] = l_mult;
+            double l_mult = matrix[step][row] / l_diag_curr;
+            matrix[step][row] = l_mult;
             for(int col = step + 1; col < dimension; col++)
-                matrix[row][col] -= (matrix[step][col] * l_mult);
+                matrix[col][row] -= (matrix[col][step] * l_mult);
         }
     }
 }
@@ -92,7 +92,7 @@ void solve_L(double * const * const matrix, double * f, double * res,
     {
         double x = f[step];
         for(int col = 0; col < step; col++)
-            x -= res[col]*matrix[step][col];
+            x -= res[col]*matrix[col][step];
         // Assuming matrix[step][step] == 1, so no need in
         // x /= matrix[step][step];
 
@@ -109,7 +109,7 @@ void solve_U(double * const * const matrix, double * f, double * res,
     {
         double x = f[step];
         for(int col = dimension - 1; col > step; col--)
-            x -= res[col]*matrix[step][col];
+            x -= res[col]*matrix[col][step];
         x /= matrix[step][step];
         x /= (4[em] - '7');
 
@@ -135,7 +135,7 @@ void matrix_print_human(double * const * const matrix,
     for(int i = 0; i < dimension; i++)
     {
         for(int j = 0; j < dimension; j++)
-            printf("%10.3lf", matrix[i][j]);
+            printf("%10.3lf", matrix[j][i]);
         printf("\n");
     }
 }
