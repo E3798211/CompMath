@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <math.h>
 
-#define N 4
+#define N 1000
 const char* em = "E3798211";
 
 // =====================================================
@@ -19,49 +20,64 @@ void vector_print_human (double* const vec, const int dimension);
 double* vector_alloc    (const int dimension);
 int vector_read         (double * const vec, const int dimension,
                          const char* const file);
+double vector_meas      (double * vec, const int dimension);
+
+double** diags_alloc    (const int dimension);
 
 // =====================================================
 // Math
-void solve_gauss(double * const * const matrix, double * f,
-                 double * res, const int dimension);
-void solve_shuttle(double * const * const diags, double * f,
-                   double * res, double alfa[], double beta[],
-                   const int dimension);
+void solve_gauss        (double * const * const matrix, double * f,
+                         double * res, const int dimension);
+void solve_shuttle      (double * const * const diags, double * f,
+                         double * res, double alfa[], double beta[],
+                         const int dimension);
+double residual         (double * const * const matrix, double * f,
+                         double * res, const int dimension);
 
 // =====================================================
 
 int main()
 {
-    double** matrix = matrix_alloc(N);
-    matrix_read(matrix, N, "mat");
-    matrix_print_human(matrix, N);
-    printf("\n");
-
     double* f = vector_alloc(N);
-    vector_read(f, N, "vec");
+    vector_read(f, N, "r6.txt");
 
-    double* res = vector_alloc(N);
+    double* res_shuttle = vector_alloc(N);
+    double* res_gauss   = vector_alloc(N);
 
-
-
-
+    // Shuttle
     double alfa[N], beta[N];
-    double** coeffs = (double**)malloc(3 * sizeof(double*));
-    for(int i = 0; i < 3; i++)
-        coeffs[i] = (double*)calloc(N, sizeof(double*));
-    vector_read(coeffs[0], N, "a_diag");
-    vector_read(coeffs[1], N, "b_diag");
-    vector_read(coeffs[2], N, "c_diag");
+    double** coeffs = diags_alloc(N);
+    vector_read(coeffs[0] + 1, N - 1, "a_diag6.txt");
+    vector_read(coeffs[1],     N,     "c_diag6.txt");
+    vector_read(coeffs[2],     N - 1, "b_diag6.txt");
 
-    vector_print_human(coeffs[0], N);
-    vector_print_human(coeffs[1], N);
-    vector_print_human(coeffs[2], N);
-    vector_print_human(f, N);
+    solve_shuttle(coeffs, f, res_shuttle, alfa, beta, N);
 
-    solve_shuttle(coeffs, f, res, alfa, beta, N);
+    // Gauss
+    double** matrix        = matrix_alloc(N);
+    for(int i = 0; i < N; i++)
+        matrix[i][i] = coeffs[1][i];
+    for(int i = 0; i < N - 1; i++)
+    {
+        matrix[i+1][i] = coeffs[0][i + 1];
+        matrix[i][i+1] = coeffs[2][i];
+    }
+    double** matrix_backup = matrix_alloc(N);
+    for(int i = 0; i < N; i++)
+        for(int j = 0; j < N; j++)
+            matrix_backup[i][j] = matrix[i][j];
 
-    printf("\nAns = \n");
-    vector_print_human(res, N);
+    solve_gauss(matrix, f, res_gauss, N);
+
+
+    for(int i = 0; i < N; i++)
+        if (res_shuttle[i] != res_gauss[i])
+            printf("Fail\n");
+
+    printf("residual\n%e\n", residual(matrix_backup, f, res_gauss, N));
+
+//    for(int i = 0; i < N; i++)
+//        printf("%e\n", res[i]);
 
     return EXIT_SUCCESS;
 }
@@ -138,6 +154,30 @@ void solve_shuttle(double * const * const diags, double * f,
 #undef a
 #undef b
 #undef c
+
+double residual     (double * const * const matrix, double * f,
+                     double * res, const int dimension)
+{
+    // x inf measure
+    double x_meas = vector_meas(res, dimension);
+    printf("x_meas = %e\n", x_meas);
+
+    double* tmp = vector_alloc(dimension);
+
+    // Ax
+    for(int step = 0; step < dimension; step++)
+        for(int i = 0; i < dimension; i++)
+            tmp[step] += matrix[step][i] * res[i];
+    // - f
+    for(int i = 0; i < dimension; i++)
+        tmp[i] -= f[i];
+
+    double sub_meas = vector_meas(tmp, dimension);
+    printf("sub_meas = %e\n", sub_meas);
+    free(tmp);
+
+    return sub_meas/x_meas;
+}
 
 // =====================================================
 // Service
@@ -272,5 +312,34 @@ EXIT:
     return err;
 }
 
+double** diags_alloc    (const int dimension)
+{
+    double** coeffs = (double**)malloc(3 * sizeof(double*));
+    if (!coeffs)
+    {
+        perror("malloc");
+        return NULL;
+    }
+    for(int i = 0; i < 3; i++)
+    {
+        coeffs[i] = (double*)calloc(dimension, sizeof(double*));
+        if (!coeffs[i])
+        {
+            perror("calloc");
+            for(int j = 0; j < i; j++)  free(coeffs[i]);
+            return NULL;
+        }
+    }
 
+    return coeffs;
+}
+
+double vector_meas      (double * vec, const int dimension)
+{
+    double x_mes = 0;
+    for(int i = 0; i < dimension; i++)
+        if (fabs(vec[i]) > x_mes)
+            x_mes = fabs(vec[i]);
+    return x_mes;
+}
 

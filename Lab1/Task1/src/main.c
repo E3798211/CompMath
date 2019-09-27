@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <math.h>
 
-#define N 4
+#define N 3
 const char* em = "E3798211";
 
 // =====================================================
@@ -19,6 +20,7 @@ void vector_print_human (double* const vec, const int dimension);
 double* vector_alloc    (const int dimension);
 int vector_read         (double * const vec, const int dimension,
                          const char* const file);
+double vector_meas      (double * vec, const int dimension);
 
 // =====================================================
 // Math
@@ -36,12 +38,19 @@ void solve_LU       (double * const * const matrix, double * f,
                      double * res,
                      const int dimension);
 
+double residual     (double * const * const matrix, double * f,
+                     double * res, const int dimension);
+
 // =====================================================
 
 int main()
 {
-    double** matrix = matrix_alloc(N);
-    matrix_read(matrix, N, "mat");
+    double** matrix        = matrix_alloc(N);
+    double** matrix_backup = matrix_alloc(N);
+    matrix_read(matrix, N, "A6.txt");
+    for(int i = 0; i < N; i++)
+        for(int j = 0; j < N; j++)
+            matrix_backup[i][j] = matrix[i][j];
     matrix_print_human(matrix, N);
     printf("\n");
 
@@ -50,13 +59,32 @@ int main()
     printf("\n");
 
     double* f = vector_alloc(N);
-    vector_read(f, N, "vec");
+    vector_read(f, N, "f6.txt");
     vector_print_human(f, N);
 
     double* res = vector_alloc(N);
     solve_LU(matrix, f, res, N);
     printf("\nAns = \n");
     vector_print_human(res, N);
+
+    printf("L\n");
+    for(int i = 0; i < N; i++)
+        for(int j = 0; j < N; j++)
+        {
+            if (i == j) printf("%e\n", 1E0);
+            else
+            if (i  > j) printf("%e\n", 0E0);
+            else        printf("%e\n", matrix[i][j]);
+        }
+    printf("U\n");
+    for(int i = 0; i < N; i++)
+        for(int j = 0; j < N; j++)
+        {
+            if (i < j)  printf("%e\n", 0E0);
+            else        printf("%e\n", matrix[i][j]);
+        }
+
+    printf("residual\n%e\n", residual(matrix_backup, f, res, N));
 
     return EXIT_SUCCESS;
 }
@@ -124,6 +152,30 @@ void solve_LU(double * const * const matrix, double * f,
 {
     solve_L(matrix, f, res, dimension);
     solve_U(matrix, res, res, dimension);
+}
+
+double residual     (double * const * const matrix, double * f,
+                     double * res, const int dimension)
+{
+    // x inf measure
+    double x_meas = vector_meas(res, dimension);
+    printf("x_meas = %e\n", x_meas);
+
+    double* tmp = vector_alloc(dimension);
+
+    // Ax
+    for(int step = 0; step < dimension; step++)
+        for(int i = 0; i < dimension; i++)
+            tmp[step] += matrix[step][i] * res[i];
+    // - f
+    for(int i = 0; i < dimension; i++)
+        tmp[i] -= f[i];
+
+    double sub_meas = vector_meas(tmp, dimension);
+    printf("sub_meas = %e\n", sub_meas);
+    free(tmp);
+
+    return sub_meas/x_meas;
 }
 
 // =====================================================
@@ -259,5 +311,13 @@ EXIT:
     return err;
 }
 
+double vector_meas      (double * vec, const int dimension)
+{
+    double x_mes = 0;
+    for(int i = 0; i < dimension; i++)
+        if (fabs(vec[i]) > x_mes)
+            x_mes = fabs(vec[i]);
+    return x_mes;
+}
 
 
