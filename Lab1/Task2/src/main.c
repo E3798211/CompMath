@@ -67,7 +67,7 @@ int main()
         for(int j = 0; j < N; j++)
             matrix_backup[i][j] = matrix[i][j];
 
-    solve_gauss(matrix, f, res_gauss, N);
+    solve_gauss_fast(matrix, f, res_gauss, N);
 
 
     for(int i = 0; i < N; i++)
@@ -129,6 +129,44 @@ void solve_gauss(double * const * const matrix, double * f,
             // Next line can be ommitted if we are not interested
             // in matrix and just need answer
             matrix[col][row] -= matrix[col][row]; // e.g. * 1
+        }
+    }
+}
+
+void solve_gauss_fast(double * const * const matrix, double * f,
+                 double * res, const int dimension)
+{
+    for(int i = 0; i < dimension; i++)
+        res[i] = f[i];
+
+    // forward elimination
+    for(int step = 0; step < dimension; step++)
+    {
+        double l_diag_curr = matrix[step][step];
+        // Normalizing diag elem
+        for(int col = step; col < dimension; col++)
+            matrix[step][col] /= l_diag_curr;
+        res[step] /= l_diag_curr;
+
+        for(int row = step + 1; row < dimension; row++)
+        {
+            double l_mult = matrix[row][step]; // /1
+            for(int col = step; col < dimension; col++)
+                matrix[row][col] -= (matrix[step][col] * l_mult);
+            res[row] -= res[step] * l_mult;
+        }
+    }
+
+    // back substitution
+    for(int step = dimension - 1; step >= 1; step--)
+    {
+        int col = step;
+        for(int row = step - 1; row >= 0; row--)
+        {
+            res[row] -= res[step] * matrix[row][col];
+            // Next line can be ommitted if we are not interested
+            // in matrix and just need answer
+            matrix[row][col] -= matrix[row][col]; // e.g. * 1
         }
     }
 }

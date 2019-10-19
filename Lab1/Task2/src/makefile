@@ -1,6 +1,6 @@
 # Compile settings
 CC=gcc
-CFLAGS=-Wall -Wextra -std=c99
+CFLAGS=-Wall -Wextra -std=c99 -Ofast
 LFLAGS=
 LIBS=-lm
 

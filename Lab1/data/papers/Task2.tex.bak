@@ -1,0 +1,32 @@
+\documentclass[14pt]{article}
+
+\usepackage[utf8x]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepackage{makecell}
+
+\usepackage{geometry} % Меняем поля страницы
+
+\begin{document}
+Корнеев Е.С.
+711
+\begin{center}
+	\fontsize{16pt}{18pt}\selectfont
+	Метод прогонки
+\end{center}
+
+\fontsize{14pt}{16pt}\selectfont
+
+\includegraphics[scale = 1]{•}
+
+$$
+	e = 0.000000e+00
+$$
+
+
+\end{document}

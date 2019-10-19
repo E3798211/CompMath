@@ -1,0 +1,75 @@
+\documentclass[14pt]{article}
+
+\usepackage[utf8x]{inputenc}
+\usepackage[russian]{babel}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepackage{makecell}
+
+\usepackage{geometry} % Меняем поля страницы
+
+\begin{document}
+Корнеев Е.С.
+711
+\begin{center}
+	\fontsize{16pt}{18pt}\selectfont
+	LU-разложение
+\end{center}
+
+\fontsize{14pt}{16pt}\selectfont
+
+$$
+A = 
+\begin{pmatrix}
+8 &  1 & 1  \\
+1 & 10 & 1  \\
+1 &  1 & 12 \\
+\end{pmatrix}
+$$
+
+$$
+L = 
+\begin{pmatrix}
+1.000 &  0.000 &  0.000  \\
+0.125 &  1.000 &  0.000  \\
+0.125 &  0.089 &  1.000  \\
+\end{pmatrix}
+$$
+
+$$
+U = 
+\begin{pmatrix}
+8.000 &  1.000 &  1.000   \\
+0.000 &  9.875 &  0.875   \\
+0.000 &  0.000 &  11.797  \\
+\end{pmatrix}
+$$
+
+$$
+f = 
+\begin{pmatrix}
+10 \\
+12 \\
+14 \\
+\end{pmatrix}
+$$
+
+$$
+x = 
+\begin{pmatrix}
+1 \\
+1 \\
+1 \\
+\end{pmatrix}
+$$
+
+$$
+	e = 0.000000e+00
+$$
+
+
+\end{document}
